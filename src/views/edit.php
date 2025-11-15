@@ -1,6 +1,17 @@
 <?php include __DIR__ . '/layout/header.php'; ?>
 <?php include __DIR__ . '/layout/sidebar.php'; ?>
 
+<?php
+if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'ningrat') {
+    echo "<script>
+            alert('Akses ditolak! Hanya pengguna dengan role NINGRAT yang dapat mengakses halaman ini.');
+            window.location.href = 'index.php';
+          </script>";
+    exit;
+}
+?>
+
+
 <main>
   <?php $currentRole = $_SESSION['user']['role'] ?? 'jelata'; ?>
   <h2>Edit Tweet</h2>

@@ -15,7 +15,7 @@
         <input type="password" name="password" placeholder="Password" required><br>
         <button type="submit">Register</button>
     </form>
-    <p>Sudah punya akun? <a href="login.php">Login</a></p>
+    <p>Sudah punya akun? <a href="index.php?action=loginForm">Login</a></p>
 </div>
 </body>
 </html>

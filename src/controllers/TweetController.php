@@ -13,8 +13,8 @@ class TweetController {
     }
 
     public function index() {
-        // Cek apakah ada parameter pencarian
         $query = $_GET['q'] ?? '';
+
         if ($query !== '') {
             $tweets = $this->model->searchTweets($query);
         } else {
@@ -37,6 +37,7 @@ class TweetController {
             header("Location: views/auth/login.php");
             exit;
         }
+
         $id = $_GET['id'] ?? null;
 
         $tweet = $this->model->getTweetById($id);
@@ -49,12 +50,11 @@ class TweetController {
     }
 
     public function store() {
-        // Ambil user_id dari session jika ada; jika tidak, set ke 1 (demo)
         $user_id = $_SESSION['user']['id'] ?? 1;
         $content = $_POST['content'] ?? '';
 
-        // UPLOAD: **TIDAK** ada validasi tipe/ekstensi — intentionally vulnerable
         $image_url = null;
+
         if (!empty($_FILES['image']['name'])) {
             $file = $_FILES['image'];
             $newName = uniqid('img_', true) . '_' . basename($file['name']);
@@ -64,6 +64,7 @@ class TweetController {
         }
 
         $ok = $this->model->addTweet($user_id, $content, $image_url);
+
         if ($ok) {
             header("Location: index.php");
             exit;
@@ -72,12 +73,12 @@ class TweetController {
             include __DIR__ . '/../views/add.php';
         }
     }
+
     public function updateTweet() {
         $id = $_POST['id'] ?? null;
         $content = $_POST['content'] ?? '';
-        $image_url = $_POST['image_url'] ?? null; // default: pakai image lama
+        $image_url = $_POST['image_url'] ?? null;
 
-        // jika user upload gambar baru, ganti
         if (!empty($_FILES['image']['name'])) {
             $file = $_FILES['image'];
             $newName = uniqid('img_', true) . '_' . basename($file['name']);
@@ -87,33 +88,35 @@ class TweetController {
         }
 
         $res = $this->model->updateTweet($id, $content, $image_url);
+
         if ($res) {
             $_SESSION['flash'] = 'Edit tweet berhasil.';
             header("Location: index.php?action=profile");
         } else {
             $error = "Gagal memperbarui tweet.";
-            include __DIR__ . '/../views/edit.php';
+            include __DIR__ . '/../views/edit.php>';
         }
     }
+
     public function deleteTweet() {
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $id = $_POST['id'];
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $id = $_POST['id'] ?? null;
 
-        // Hapus tweet dari database
-        $query = "DELETE FROM tweets WHERE id = '$id'";
-        $this->db->query($query);
+            // ====== PERBAIKAN SQL INJECTION ======
+            $stmt = $this->db->prepare("DELETE FROM tweets WHERE id = ?");
+            $stmt->bind_param("i", $id);
+            $stmt->execute();
+            // =====================================
 
-        // Ambil username user aktif agar bisa redirect ke halaman profil yang sama
-        $username = $_SESSION['user']['username'] ?? null;
+            $username = $_SESSION['user']['username'] ?? null;
 
-        if ($username) {
-            header("Location: index.php?action=profile&username={$username}&deleted=1");
-        } else {
-            header("Location: index.php?action=profile&deleted=1");
+            if ($username) {
+                header("Location: index.php?action=profile&username={$username}&deleted=1");
+            } else {
+                header("Location: index.php?action=profile&deleted=1");
+            }
+            exit;
         }
-        exit;
     }
-}
-
 }
 ?>
