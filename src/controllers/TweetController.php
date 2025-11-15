@@ -53,14 +53,43 @@ class TweetController {
         $user_id = $_SESSION['user']['id'] ?? 1;
         $content = $_POST['content'] ?? '';
 
+        if ($content !== strip_tags($content)) {
+            $error = "Terdapat Karakter Spesial yang tidak diperbolehkan!";
+            include __DIR__ . '/../views/add.php';
+            return;
+        }
+
         $image_url = null;
 
+        // FIX upload
         if (!empty($_FILES['image']['name'])) {
-            $file = $_FILES['image'];
-            $newName = uniqid('img_', true) . '_' . basename($file['name']);
-            $dest = __DIR__ . '/../uploads/' . $newName;
-            move_uploaded_file($file['tmp_name'], $dest);
-            $image_url = 'uploads/' . $newName;
+
+            $allowed = ['jpg','jpeg','png','gif'];
+            $ext = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
+
+            if (!in_array($ext, $allowed)) {
+                $error = "File tidak valid. Hanya JPG, PNG, GIF yang diperbolehkan.";
+                include __DIR__ . '/../views/add.php';
+                return;
+            }
+            if ($_FILES['image']['size'] > 2 * 1024 * 1024) {
+                $error = "File terlalu besar. Maksimal 2MB.";
+                include __DIR__ . '/../views/add.php';
+                return;
+            }
+
+            $check = finfo_open(FILEINFO_MIME_TYPE);
+            $mime = finfo_file($check, $_FILES['image']['tmp_name']);
+            finfo_close($check);
+
+            if (!str_starts_with($mime, "image/")) {
+                exit("Hanya boleh upload gambar!");
+            }
+
+            $newName = uniqid('img_', true).".".$ext;
+            $dest = $this->uploadDir.$newName;
+            move_uploaded_file($_FILES['image']['tmp_name'], $dest);
+            $image_url = 'uploads/'.$newName;
         }
 
         $ok = $this->model->addTweet($user_id, $content, $image_url);
@@ -76,14 +105,62 @@ class TweetController {
 
     public function updateTweet() {
         $id = $_POST['id'] ?? null;
-        $content = $_POST['content'] ?? '';
-        $image_url = $_POST['image_url'] ?? null;
+        $content = $_POST['content'] ?? null;
+        $oldImageUrl = $_POST['image_url'] ?? null;
 
+        if ($content !== strip_tags($content)) {
+            $error = "Terdapat Karakter Spesial yang tidak diperbolehkan!";
+            include __DIR__ . '/../views/edit.php';
+            return;
+        }
+
+        $tweet = $this->model->getTweetById($id);
+        if (!$tweet) {
+            $error = "Tweet tidak ditemukan.";
+            include __DIR__ . '/../views/edit.php';
+            return;
+        }
+
+        $image_url = $oldImageUrl;
+
+        // Jika ada upload baru
         if (!empty($_FILES['image']['name'])) {
-            $file = $_FILES['image'];
-            $newName = uniqid('img_', true) . '_' . basename($file['name']);
-            $dest = __DIR__ . '/../uploads/' . $newName;
-            move_uploaded_file($file['tmp_name'], $dest);
+
+            $allowed = ['jpg','jpeg','png','gif'];
+            $ext = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
+
+            if (!in_array($ext, $allowed)) {
+                $error = "File tidak valid. Hanya JPG, PNG, GIF.";
+                include __DIR__ . '/../views/edit.php';
+                return;
+            }
+
+            if ($_FILES['image']['size'] > 2 * 1024 * 1024) {
+                $error = "File terlalu besar. Maksimal 2MB.";
+                include __DIR__ . '/../views/edit.php';
+                return;
+            }
+
+            $check = finfo_open(FILEINFO_MIME_TYPE);
+            $mime = finfo_file($check, $_FILES['image']['tmp_name']);
+            finfo_close($check);
+
+            if (!str_starts_with($mime, "image/")) {
+                $error = "File bukan gambar!";
+                include __DIR__ . '/../views/edit.php';
+                return;
+            }
+
+            if (!empty($tweet['image_url'])) {
+                $oldPath = __DIR__ . '/../' . $tweet['image_url'];
+                if (file_exists($oldPath)) unlink($oldPath);
+            }
+
+            $newName = uniqid('img_', true) . "." . $ext;
+            $dest = $this->uploadDir . $newName;
+
+            move_uploaded_file($_FILES['image']['tmp_name'], $dest);
+
             $image_url = 'uploads/' . $newName;
         }
 
@@ -102,11 +179,23 @@ class TweetController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = $_POST['id'] ?? null;
 
-            // ====== PERBAIKAN SQL INJECTION ======
+            $tweet = $this->model->getTweetById($id);
+
+            if ($tweet['user_id'] !== $_SESSION['user']['id']) {
+                http_response_code(403);
+                exit("403 Forbidden");
+            }
+            if ($tweet && !empty($tweet['image_url'])) {
+                $filePath = __DIR__ . '/../' . $tweet['image_url'];
+
+                if (file_exists($filePath)) {
+                    unlink($filePath);
+                }
+            }
+
             $stmt = $this->db->prepare("DELETE FROM tweets WHERE id = ?");
             $stmt->bind_param("i", $id);
             $stmt->execute();
-            // =====================================
 
             $username = $_SESSION['user']['username'] ?? null;
 
@@ -118,5 +207,6 @@ class TweetController {
             exit;
         }
     }
+
 }
 ?>
