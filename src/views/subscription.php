@@ -2,6 +2,8 @@
 $currentUser = $_SESSION['user'] ?? null;
 $currentRole = $currentUser['role'] ?? 'jelata';
 $currentUserId = $currentUser['id'] ?? null;
+
+$csrf = $_SESSION['csrf_token'];
 ?>
 
 <?php include __DIR__ . '/layout/header.php'; ?>
@@ -44,9 +46,10 @@ $currentUserId = $currentUser['id'] ?? null;
           <?php if ($currentRole === 'jelata'): ?>
           <?php else: ?>
             <form method="POST" action="index.php?action=unsubs" style="display:inline;">
-              <input type="hidden" name="user_id" value="<?= $currentUserId; ?>">
+              <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf) ?>">
               <button type="submit" class="btn btn-muted">Downgrade ke Jelata</button>
-            </form>
+          </form>
+
           <?php endif; ?>
         </div>
       </div>
@@ -65,9 +68,10 @@ $currentUserId = $currentUser['id'] ?? null;
           <?php if ($currentRole === 'ningrat'): ?>
           <?php else: ?>
             <form method="POST" action="index.php?action=subs" style="display:inline;">
-              <input type="hidden" name="user_id" value="<?= $currentUserId; ?>">
+              <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf) ?>">
               <button type="submit" class="btn btn-primary">Upgrade ke Ningrat</button>
-            </form>
+          </form>
+
           <?php endif; ?>
         </div>
       </div>
