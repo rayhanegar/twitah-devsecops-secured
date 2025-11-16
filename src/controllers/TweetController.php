@@ -127,6 +127,7 @@ class TweetController {
         $oldImageUrl = $_POST['image_url'] ?? null;
 
         if ($content !== strip_tags($content)) {
+            $tweet = $this->model->getTweetById($id);
             $error = "Terdapat Karakter Spesial yang tidak diperbolehkan!";
             include __DIR__ . '/../views/edit.php';
             return;
