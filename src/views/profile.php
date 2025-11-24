@@ -93,7 +93,7 @@
         <p style="margin-top:10px;"><?= htmlspecialchars($tweet['content']); ?></p>
 
         <?php if (!empty($tweet['image_url'])): ?>
-          <img src="<?= htmlspecialchars($tweet['image_url']); ?>" alt="tweet image"
+          <img src="/<?= htmlspecialchars($tweet['image_url']); ?>" alt="tweet image"
                style="max-width:100%; border-radius:8px; margin-top:10px;">
         <?php endif; ?>
 

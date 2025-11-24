@@ -36,7 +36,7 @@
 
                 <!-- SAFE: Image URL tidak bisa disisipi JS -->
                 <?php if ($imageUrl): ?>
-                    <img src="<?= $imageUrl ?>" alt="tweet image">
+                    <img src="/<?= $imageUrl ?>" alt="tweet image" style="max-width: 100%; height: auto; border-radius: 8px; margin-top: 10px;">
                 <?php endif; ?>
 
                 <small><?= $created ?></small>
