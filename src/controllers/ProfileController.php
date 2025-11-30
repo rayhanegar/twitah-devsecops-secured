@@ -22,19 +22,27 @@ class ProfileController {
         if (isset($_GET['id'])) {
             $id = $_GET['id'];
 
-            $result = $this->db->query("SELECT * FROM users WHERE id = '$id' LIMIT 1");
+            $stmt = $this->db->prepare("SELECT * FROM users WHERE id = ? LIMIT 1");
+            $stmt->bind_param("i", $id);
+            $stmt->execute();
+            $result = $stmt->get_result();
             $profileUser = $result->fetch_assoc();
+            $stmt->close();
 
             if (!$profileUser) {
                 echo "<p>User not found.</p>";
                 return;
             }
 
-            $tweetsResult = $this->db->query("SELECT * FROM tweets WHERE user_id = " . $profileUser['id'] . " ORDER BY created_at DESC");
+            $stmt = $this->db->prepare("SELECT * FROM tweets WHERE user_id = ? ORDER BY created_at DESC");
+            $stmt->bind_param("i", $profileUser['id']);
+            $stmt->execute();
+            $tweetsResult = $stmt->get_result();
             $tweets = [];
             while ($row = $tweetsResult->fetch_assoc()) {
                 $tweets[] = $row;
             }
+            $stmt->close();
         } 
         else {
             $profileUser = $_SESSION['user'];
@@ -54,14 +62,22 @@ class ProfileController {
         $userId = (int)$_SESSION['user']['id'];
 
         // Cek duplikasi username
-        $check = $this->db->query("SELECT id FROM users WHERE username = '$newUsername' AND id != $userId");
+        $stmt = $this->db->prepare("SELECT id FROM users WHERE username = ? AND id != ?");
+        $stmt->bind_param("si", $newUsername, $userId);
+        $stmt->execute();
+        $check = $stmt->get_result();
         if ($check->num_rows > 0) {
+            $stmt->close();
             echo "<script>alert('Username sudah digunakan!'); window.location='index.php?action=profile';</script>";
             exit;
         }
+        $stmt->close();
 
-        // Update username tanpa prepared statement
-        $this->db->query("UPDATE users SET username = '$newUsername' WHERE id = $userId");
+        // Update username dengan prepared statement
+        $stmt = $this->db->prepare("UPDATE users SET username = ? WHERE id = ?");
+        $stmt->bind_param("si", $newUsername, $userId);
+        $stmt->execute();
+        $stmt->close();
 
         // Update session
         $_SESSION['user']['username'] = $newUsername;
