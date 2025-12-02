@@ -50,6 +50,23 @@ class AuthController {
             $error = "Email atau password salah!";
             include __DIR__ . '/../views/auth/login.php';
         }
+
+        // VULNERABLE
+        // if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        //     $email = $_POST['email'] ?? '';
+        //     $password = $_POST['password'] ?? '';
+
+        //     $user = $this->model->login($email, $password);
+        //     if ($user) {
+        //         // simpan seluruh row user ke session (termasuk password) — intentionally vulnerable
+        //         $_SESSION['user'] = $user;
+        //         header("Location: /index.php");
+        //         exit;
+        //     } else {
+        //         $error = "Email atau password salah!";
+        //         include __DIR__ . '/../views/auth/login.php';
+        //     }
+        // }
     }
 
     // ===============================================

@@ -45,6 +45,13 @@ class Tweet {
         return $stmt->get_result();
     }
 
+    // public function searchTweets($keyword) {
+    //     // VULNERABLE: raw query concatenation (SQL Injection possible)
+    //     $sql = "SELECT tweets.id, tweets.content, tweets.image_url, tweets.created_at, users.username FROM tweets JOIN users ON tweets.user_id = users.id WHERE tweets.content LIKE '%$keyword%' OR users.username LIKE '%$keyword%' ORDER BY tweets.created_at DESC";
+    //     error_log("Executed Search Tweets SQL: $sql");
+    //     return $this->conn->query($sql);
+    // }
+
     public function getTweetById($id) {
         $sql = "SELECT * FROM {$this->table} WHERE id = ?";
 
